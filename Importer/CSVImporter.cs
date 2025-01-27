@@ -1,4 +1,5 @@
 ﻿using Importer.Models;
+using System.Globalization;
 using System.Text;
 using System.Text.Json;
 
@@ -13,6 +14,7 @@ namespace Importer
         private const string validExtension = ".csv";
         private const int validColumnCount = 5;
         private static readonly string[] validHeaderValues = { "mm", "p1", "p2", "p3", "p4" };
+        private const int maxImportableSamples = 1000000;
 
         public static CSVImporter Instance => instance ??= new CSVImporter();
 
@@ -118,34 +120,26 @@ namespace Importer
 
                 List<Sample> samples = [];
 
-                using (var reader = new StreamReader(filePath))
+                using var reader = new StreamReader(filePath);
+                for (int lineIdx = 0; !reader.EndOfStream; ++lineIdx)
                 {
-                    bool headerSkipped = false;
-                    while (!reader.EndOfStream)
+                    var line = reader.ReadLine();
+
+                    if (lineIdx == 0) continue;
+                    if (lineIdx == maxImportableSamples + 1) break;
+
+                    var values = line.Split(',');
+
+                    samples.Add(new()
                     {
-                        var line = reader.ReadLine();
-
-                        if (!headerSkipped)
-                        {
-                            headerSkipped = true;
-                            continue;
-                        }
-
-                        var values = line.Split(',');
-
-                        var sample = new Sample
-                        {
-                            Parameter1 = double.Parse(values[1], System.Globalization.NumberStyles.AllowDecimalPoint),
-                            Parameter2 = double.Parse(values[2], System.Globalization.NumberStyles.AllowDecimalPoint),
-                            Parameter3 = double.Parse(values[3], System.Globalization.NumberStyles.AllowDecimalPoint),
-                            Parameter4 = double.Parse(values[4], System.Globalization.NumberStyles.AllowDecimalPoint)
-                        };
-
-                        samples.Add(sample);
-                    }
+                        Parameter1 = double.Parse(values[1], CultureInfo.InvariantCulture),
+                        Parameter2 = double.Parse(values[2], CultureInfo.InvariantCulture),
+                        Parameter3 = double.Parse(values[3], CultureInfo.InvariantCulture),
+                        Parameter4 = double.Parse(values[4], CultureInfo.InvariantCulture)
+                    });
                 }
 
-                var client = new HttpClient();
+                using var client = new HttpClient();
                 var request = new HttpRequestMessage(HttpMethod.Post, "https://localhost:7217/Analysis/ImportSamples");
                 var content = new StringContent(JsonSerializer.Serialize(samples), Encoding.UTF8, "application/json");
                 request.Content = content;
