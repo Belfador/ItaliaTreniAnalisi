@@ -1,5 +1,6 @@
 ﻿using Importer.Models;
 using System.Globalization;
+using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 
@@ -31,8 +32,8 @@ namespace Importer
                 Logger.Instance.Log("Application started.");
 
                 if (!GetFile()) throw new FileNotFoundException("CSV file not found.");
-                if (await IsValid() == false) throw new InvalidDataException("CSV file is invalid.");
-                if (await Import() == false) throw new Exception("CSV file import failed.");
+                if (!await IsValid()) throw new InvalidDataException("CSV file is invalid.");
+                if (!await Import()) throw new InvalidOperationException("CSV file import failed.");
 
                 Logger.Instance.Log("Application finished.");
             }
@@ -102,7 +103,7 @@ namespace Importer
             });
         }
 
-        private bool IsValidHeader(string[] values)
+        private static bool IsValidHeader(string[] values)
         {
             if (values.Length != validColumnCount) return false;
             for (var col = 0; col < validColumnCount; col++)
@@ -120,36 +121,52 @@ namespace Importer
 
                 List<Sample> samples = [];
 
-                using var reader = new StreamReader(filePath);
-                for (int lineIdx = 0; !reader.EndOfStream; ++lineIdx)
+                using (var reader = new StreamReader(filePath))
                 {
-                    var line = reader.ReadLine();
-
-                    if (lineIdx == 0) continue;
-                    if (lineIdx == maxImportableSamples + 1) break;
-
-                    var values = line.Split(',');
-
-                    samples.Add(new()
+                    for (int lineIdx = 0; !reader.EndOfStream; ++lineIdx)
                     {
-                        Parameter1 = double.Parse(values[1], CultureInfo.InvariantCulture),
-                        Parameter2 = double.Parse(values[2], CultureInfo.InvariantCulture),
-                        Parameter3 = double.Parse(values[3], CultureInfo.InvariantCulture),
-                        Parameter4 = double.Parse(values[4], CultureInfo.InvariantCulture)
-                    });
+                        var line = reader.ReadLine();
+
+                        if (lineIdx == 0) continue;
+                        if (lineIdx == maxImportableSamples + 1) break;
+
+                        var values = line.Split(',');
+
+                        samples.Add(new()
+                        {
+                            Parameter1 = double.Parse(values[1], CultureInfo.InvariantCulture),
+                            Parameter2 = double.Parse(values[2], CultureInfo.InvariantCulture),
+                            Parameter3 = double.Parse(values[3], CultureInfo.InvariantCulture),
+                            Parameter4 = double.Parse(values[4], CultureInfo.InvariantCulture)
+                        });
+                    }
                 }
 
-                using var client = new HttpClient();
-                var request = new HttpRequestMessage(HttpMethod.Post, "https://localhost:7217/Analysis/ImportSamples");
-                var content = new StringContent(JsonSerializer.Serialize(samples), Encoding.UTF8, "application/json");
-                request.Content = content;
-                var response = await client.SendAsync(request);
-                response.EnsureSuccessStatusCode();
+                int batchSize = 1000;
+                var tasks = new List<Task>();
+
+                using (var client = new HttpClient())
+                {
+                    for (int i = 0; i < samples.Count; i += batchSize)
+                    {
+                        var batch = samples.Skip(i).Take(batchSize).ToList();
+                        tasks.Add(PostBatchAsync(client, batch));
+                    }
+
+                    await Task.WhenAll(tasks);
+                }
 
                 Logger.Instance.Log("CSV file imported successfully.");
 
                 return true;
             });
+        }
+
+        private async Task PostBatchAsync(HttpClient client, List<Sample> batch)
+        {
+            var content = new StringContent(JsonSerializer.Serialize(batch), Encoding.UTF8, "application/json");
+            var response = await client.PostAsJsonAsync("https://localhost:7217/Analysis/ImportSamples", content);
+            response.EnsureSuccessStatusCode();
         }
     }
 }
