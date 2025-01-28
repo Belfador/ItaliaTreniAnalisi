@@ -1,4 +1,5 @@
 ﻿using API.Models.Domain;
+using API.Models.DTO;
 
 namespace API.Services
 {
@@ -6,5 +7,6 @@ namespace API.Services
     {
         Task<IEnumerable<Sample>> GetSamples(int page);
         Task ImportSamples(IEnumerable<Sample> samples);
+        Task<IEnumerable<OutOfRangeMeasureDTO>> AnalyzeSamples(int startMm, int endMm, int threshold);
     }
 }

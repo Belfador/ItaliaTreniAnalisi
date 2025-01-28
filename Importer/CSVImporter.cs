@@ -117,7 +117,7 @@ namespace Importer
                 Logger.Instance.Log("Importing CSV file...");
 
                 var samples = GetSamples();
-                await SampleService.Instance.ImportAsync(samples);
+                await SampleService.Instance.ImportSamplesAsync(samples);
 
                 Logger.Instance.Log("CSV file imported successfully.");
 

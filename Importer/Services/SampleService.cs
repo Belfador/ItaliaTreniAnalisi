@@ -15,8 +15,10 @@ namespace Importer.Services
 
         }
 
-        public async Task ImportAsync(IEnumerable<Sample> samples)
+        public async Task ImportSamplesAsync(IEnumerable<Sample> samples)
         {
+            var requestURI = $"{Resources.baseURI}/Analysis/ImportSamples";
+
             using (var client = new HttpClient())
             {
                 int samplesCount = samples.Count();
@@ -24,14 +26,15 @@ namespace Importer.Services
                 for (int i = 0; i < samplesCount; i += batchSize)
                 {
                     var batch = samples.Skip(i).Take(batchSize);
-                    await PostBatchAsync(client, batch);
+                    await PostBatchAsync(client, requestURI, batch);
                 }
             }
         }
 
-        private async Task PostBatchAsync(HttpClient client, IEnumerable<Sample> batch)
+
+        private static async Task PostBatchAsync<T>(HttpClient client, string requestURI, T batch)
         {
-            var request = new HttpRequestMessage(HttpMethod.Post, "https://localhost:7217/Analysis/ImportSamples");
+            var request = new HttpRequestMessage(HttpMethod.Post, requestURI);
             var content = new StringContent(JsonSerializer.Serialize(batch), Encoding.UTF8, "application/json");
             request.Content = content;
             var response = await client.SendAsync(request);

@@ -49,5 +49,20 @@ namespace ItaliaTreniAnalisi.Controllers
                 return BadRequest(ex.Message);
             }
         }
+
+        [HttpGet]
+        public async Task<IActionResult> AnalyzeSamples(int startMm, int endMm, int threshold)
+        {
+            try
+            {
+                var outOfRangeMeasures = await sampleService.AnalyzeSamples(startMm, endMm, threshold);
+
+                return Ok(outOfRangeMeasures);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
     }
 }
