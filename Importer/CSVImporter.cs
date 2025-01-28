@@ -1,8 +1,6 @@
 ﻿using Importer.Models;
+using Importer.Services;
 using System.Globalization;
-using System.Net.Http.Json;
-using System.Text;
-using System.Text.Json;
 
 namespace Importer
 {
@@ -15,7 +13,6 @@ namespace Importer
         private const string validExtension = ".csv";
         private const int validColumnCount = 5;
         private static readonly string[] validHeaderValues = { "mm", "p1", "p2", "p3", "p4" };
-        private const int maxImportableSamples = 1000000;
 
         public static CSVImporter Instance => instance ??= new CSVImporter();
 
@@ -93,7 +90,7 @@ namespace Importer
                             }
                         }
 
-                        if (++linesRead % 150000 == 0) Logger.Instance.Log($"Validated {linesRead} of {linesCount} lines.");
+                        ++linesRead;
                     }
                 }
 
@@ -119,42 +116,8 @@ namespace Importer
             {
                 Logger.Instance.Log("Importing CSV file...");
 
-                List<Sample> samples = [];
-
-                using (var reader = new StreamReader(filePath))
-                {
-                    for (int lineIdx = 0; !reader.EndOfStream; ++lineIdx)
-                    {
-                        var line = reader.ReadLine();
-
-                        if (lineIdx == 0) continue;
-                        if (lineIdx == maxImportableSamples + 1) break;
-
-                        var values = line.Split(',');
-
-                        samples.Add(new()
-                        {
-                            Parameter1 = double.Parse(values[1], CultureInfo.InvariantCulture),
-                            Parameter2 = double.Parse(values[2], CultureInfo.InvariantCulture),
-                            Parameter3 = double.Parse(values[3], CultureInfo.InvariantCulture),
-                            Parameter4 = double.Parse(values[4], CultureInfo.InvariantCulture)
-                        });
-                    }
-                }
-
-                int batchSize = 1000;
-                var tasks = new List<Task>();
-
-                using (var client = new HttpClient())
-                {
-                    for (int i = 0; i < samples.Count; i += batchSize)
-                    {
-                        var batch = samples.Skip(i).Take(batchSize).ToList();
-                        tasks.Add(PostBatchAsync(client, batch));
-                    }
-
-                    await Task.WhenAll(tasks);
-                }
+                var samples = GetSamples();
+                await SampleService.Instance.ImportAsync(samples);
 
                 Logger.Instance.Log("CSV file imported successfully.");
 
@@ -162,11 +125,27 @@ namespace Importer
             });
         }
 
-        private async Task PostBatchAsync(HttpClient client, List<Sample> batch)
+        private IEnumerable<Sample> GetSamples()
         {
-            var content = new StringContent(JsonSerializer.Serialize(batch), Encoding.UTF8, "application/json");
-            var response = await client.PostAsJsonAsync("https://localhost:7217/Analysis/ImportSamples", content);
-            response.EnsureSuccessStatusCode();
+            using (var reader = new StreamReader(filePath))
+            {
+                for (int lineIdx = 0; !reader.EndOfStream; ++lineIdx)
+                {
+                    var line = reader.ReadLine();
+
+                    var values = line.Split(',');
+
+                    if (values[0] == validHeaderValues[0]) continue; // Skip the header
+
+                    yield return new()
+                    {
+                        Parameter1 = double.Parse(values[1], CultureInfo.InvariantCulture),
+                        Parameter2 = double.Parse(values[2], CultureInfo.InvariantCulture),
+                        Parameter3 = double.Parse(values[3], CultureInfo.InvariantCulture),
+                        Parameter4 = double.Parse(values[4], CultureInfo.InvariantCulture)
+                    };
+                }
+            }
         }
     }
 }

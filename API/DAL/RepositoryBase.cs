@@ -1,5 +1,9 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using FastMember;
+using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using System.Linq.Expressions;
+using System.Reflection.PortableExecutable;
 
 namespace API.DAL
 {
@@ -48,6 +52,17 @@ namespace API.DAL
             await dbSet.AddRangeAsync(entities);
             
             return entities;
+        }
+
+        public async Task BulkCopyAsync(IEnumerable<T> entities)
+        {
+            using (var reader = ObjectReader.Create(entities))
+            using (var bulkCopy = new SqlBulkCopy(context.Database.GetDbConnection().ConnectionString))
+            {
+                bulkCopy.BulkCopyTimeout = 600;
+                bulkCopy.DestinationTableName = dbSet.EntityType.GetTableName();
+                await bulkCopy.WriteToServerAsync(reader);
+            }
         }
 
         public async Task<T> DeleteAsync(T entity)

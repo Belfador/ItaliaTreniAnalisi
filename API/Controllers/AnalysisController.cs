@@ -17,8 +17,8 @@ namespace ItaliaTreniAnalisi.Controllers
             this.sampleService = sampleService;
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetSamples(int page)
+        [HttpGet("{page}")]
+        public async Task<IActionResult> GetSamples([FromRoute] int page)
         {
             try
             {
@@ -39,7 +39,6 @@ namespace ItaliaTreniAnalisi.Controllers
             try
             {
                 var samples = TinyMapper.Map<List<ImportSampleDTO>, List<Sample>>(request.ToList());
-
                 await sampleService.ImportSamples(samples);
                 var response = TinyMapper.Map<List<Sample>, List<SampleDTO>>(samples.ToList());
 

@@ -9,6 +9,7 @@ namespace API.DAL
         Task<IEnumerable<T>> GetWhereAsync(Expression<Func<T, bool>> predicate);
         Task<T> CreateAsync(T entity);
         Task<IEnumerable<T>> CreateManyAsync(IEnumerable<T> entities);
+        Task BulkCopyAsync(IEnumerable<T> entities);
         Task<T> DeleteAsync(T entity);
         Task<T> DeleteByIdAsync(object id);
         Task<T> UpdateAsync(T entity);

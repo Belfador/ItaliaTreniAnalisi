@@ -20,8 +20,7 @@ namespace API.Services
 
         public async Task ImportSamples(IEnumerable<Sample> samples)
         {
-            await sampleRepository.CreateManyAsync(samples);
-            await sampleRepository.SaveAsync();
+            await sampleRepository.BulkCopyAsync(samples);
         }
     }
 }
