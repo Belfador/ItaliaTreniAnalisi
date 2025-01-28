@@ -1,9 +1,7 @@
 ﻿using FastMember;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using System.Linq.Expressions;
-using System.Reflection.PortableExecutable;
 
 namespace API.DAL
 {
