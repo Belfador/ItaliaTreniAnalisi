@@ -63,9 +63,9 @@ namespace Importer {
         /// <summary>
         ///   Looks up a localized string similar to https://localhost:7217.
         /// </summary>
-        internal static string baseURI {
+        internal static string apiBaseUrl {
             get {
-                return ResourceManager.GetString("baseURI", resourceCulture);
+                return ResourceManager.GetString("apiBaseUrl", resourceCulture);
             }
         }
     }

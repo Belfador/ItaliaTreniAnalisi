@@ -28,9 +28,9 @@ namespace Importer
             {
                 Logger.Instance.Log("Application started.");
 
-                if (!GetFile()) throw new FileNotFoundException("CSV file not found.");
+                GetFile();
                 if (!await IsValid()) throw new InvalidDataException("CSV file is invalid.");
-                if (!await Import()) throw new InvalidOperationException("CSV file import failed.");
+                await Import();
 
                 Logger.Instance.Log("Application finished.");
             }
@@ -44,20 +44,12 @@ namespace Importer
             }
         }
 
-        private bool GetFile()
+        private void GetFile()
         {
-            if (!Directory.Exists(directoryPath)) throw new DirectoryNotFoundException("Directory not found.");
-
-            var files = Directory.GetFiles(directoryPath).Where(IsValidExtension).ToList();
-
-            if (files.Count == 0) return false;
-            if (files.Count > 1) throw new FileNotFoundException("Multiple CSV files found.");
-
-            filePath = files[0];
+            var files = Directory.GetFiles(directoryPath).Where(IsValidExtension);
+            filePath = files.Single();
 
             Logger.Instance.Log($"File found: {filePath}");
-
-            return true;
         }
 
         private static bool IsValidExtension(string filePath) => Path.GetExtension(filePath).ToLower() == validExtension;
@@ -110,9 +102,9 @@ namespace Importer
             return true;
         }
 
-        private async Task<bool> Import()
+        private async Task Import()
         {
-            return await Task.Run(async () =>
+            await Task.Run(async () =>
             {
                 Logger.Instance.Log("Importing CSV file...");
 
@@ -120,8 +112,6 @@ namespace Importer
                 await SampleService.Instance.ImportSamplesAsync(samples);
 
                 Logger.Instance.Log("CSV file imported successfully.");
-
-                return true;
             });
         }
 
@@ -129,7 +119,7 @@ namespace Importer
         {
             using (var reader = new StreamReader(filePath))
             {
-                for (int lineIdx = 0; !reader.EndOfStream; ++lineIdx)
+                while (!reader.EndOfStream)
                 {
                     var line = reader.ReadLine();
 

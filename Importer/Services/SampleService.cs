@@ -17,7 +17,7 @@ namespace Importer.Services
 
         public async Task ImportSamplesAsync(IEnumerable<Sample> samples)
         {
-            var requestURI = $"{Resources.baseURI}/Analysis/ImportSamples";
+            var requestURI = $"{Resources.apiBaseUrl}/Analysis/ImportSamples";
 
             using (var client = new HttpClient())
             {
@@ -30,7 +30,6 @@ namespace Importer.Services
                 }
             }
         }
-
 
         private static async Task PostBatchAsync<T>(HttpClient client, string requestURI, T batch)
         {
