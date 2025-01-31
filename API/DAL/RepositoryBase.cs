@@ -16,6 +16,16 @@ namespace API.DAL
             dbSet = context.Set<T>();
         }
 
+        public async Task<IEnumerable<T>> GetAllAsync()
+        {
+            return await dbSet.ToListAsync();
+        }
+
+        public async Task<int> GetCountAll()
+        {
+            return await dbSet.CountAsync();
+        }
+
         public async Task<IEnumerable<T>> GetAsync(int page, int pageSize)
         {
             return await dbSet.Skip(page * pageSize).Take(pageSize).ToListAsync();

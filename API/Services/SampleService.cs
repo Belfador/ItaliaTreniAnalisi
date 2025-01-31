@@ -7,20 +7,32 @@ namespace API.Services
     public class SampleService : ISampleService
     {
         private readonly IRepository<Sample> sampleRepository;
-        private const int pageSize = 1000;
+        private readonly IConfiguration configuration;
 
-        public SampleService(IRepository<Sample> sampleRepository)
+        private readonly int maxSamples;
+        private readonly int samplesPerPage;
+
+        public SampleService(IRepository<Sample> sampleRepository, IConfiguration configuration)
         {
             this.sampleRepository = sampleRepository;
+            this.configuration = configuration;
+
+            maxSamples = configuration.GetValue<int>("MaxSamples");
+            samplesPerPage = configuration.GetValue<int>("SamplesPerPage");
         }
 
         public async Task<IEnumerable<Sample>> GetSamples(int page)
         {
-            return (await sampleRepository.GetAsync(page, pageSize)).ToList();
+            return (await sampleRepository.GetAsync(page, samplesPerPage)).ToList();
         }
 
         public async Task ImportSamples(IEnumerable<Sample> samples)
         {
+            if (samples.Count() > maxSamples)
+            {
+                throw new Exception("Too many samples");
+            }
+
             await sampleRepository.BulkCopyAsync(samples);
         }
 

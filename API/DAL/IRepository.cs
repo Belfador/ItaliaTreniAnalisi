@@ -4,6 +4,8 @@ namespace API.DAL
 {
     public interface IRepository<T> where T : class
     {
+        Task<IEnumerable<T>> GetAllAsync();
+        Task<int> GetCountAll();
         Task<IEnumerable<T>> GetAsync(int page, int pageSize);
         Task<T> GetByIdAsync(object id);
         Task<IEnumerable<T>> GetWhereAsync(Expression<Func<T, bool>> predicate);
