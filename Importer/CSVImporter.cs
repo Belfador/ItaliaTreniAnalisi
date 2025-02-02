@@ -58,8 +58,6 @@ namespace Importer
         {
             return await Task.Run(() =>
             {
-                Logger.Instance.Log("Validating CSV file...");
-
                 int linesRead = 0;
                 int linesCount = File.ReadLines(filePath).Count();
 
@@ -82,7 +80,10 @@ namespace Importer
                             }
                         }
 
-                        ++linesRead;
+                        if (++linesRead % 300000 == 0)
+                        {
+                            Logger.Instance.Log($"Validating CSV file... {linesRead/(float)linesCount * 100:0.00}%");
+                        }
                     }
                 }
 
