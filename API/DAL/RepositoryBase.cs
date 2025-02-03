@@ -1,4 +1,5 @@
-﻿using FastMember;
+﻿using API.Models.Domain;
+using FastMember;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
@@ -62,15 +63,19 @@ namespace API.DAL
             return entities;
         }
 
-        public async Task BulkCopyAsync(IEnumerable<T> entities)
+        public async Task BulkCopyAsync(Job job, IEnumerable<T> entities)
         {
             using (var reader = ObjectReader.Create(entities))
             using (var bulkCopy = new SqlBulkCopy(context.Database.GetDbConnection().ConnectionString))
             {
+                bulkCopy.NotifyAfter = entities.Count() / 100;
                 bulkCopy.BulkCopyTimeout = 600;
                 bulkCopy.DestinationTableName = dbSet.EntityType.GetTableName();
+                bulkCopy.SqlRowsCopied += (sender, e) => job.Progress = (int)(e.RowsCopied / (float)entities.Count() * 100);
                 await bulkCopy.WriteToServerAsync(reader);
             }
+
+            job.IsCompleted = true;
         }
 
         public async Task<T> DeleteAsync(T entity)

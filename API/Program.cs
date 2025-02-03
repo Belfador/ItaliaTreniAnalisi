@@ -20,6 +20,8 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("LocalConnection"));
 });
 
+builder.Services.AddSingleton<IJobService, JobService>();
+
 builder.Services.AddScoped<IRepository<Sample>, RepositoryBase<Sample>>();
 builder.Services.AddScoped<ISampleService, SampleService>();
 

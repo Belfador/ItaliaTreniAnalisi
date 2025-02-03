@@ -26,17 +26,17 @@ namespace API.Services
             return (await sampleRepository.GetAsync(page, samplesPerPage)).ToList();
         }
 
-        public async Task ImportSamples(IEnumerable<Sample> samples)
+        public async Task ImportSamples(Job job, IEnumerable<Sample> samples)
         {
             if (samples.Count() > maxSamples)
             {
                 throw new Exception("Too many samples");
             }
 
-            await sampleRepository.BulkCopyAsync(samples);
+            await sampleRepository.BulkCopyAsync(job, samples);
         }
 
-        public async Task<IEnumerable<OutOfRangeMeasureDTO>> AnalyzeSamples(int startMm, int endMm, int threshold)
+        public async Task<IEnumerable<OutOfRangeMeasureDTO>> AnalyzeSamples(Job job, int startMm, int endMm, int threshold)
         {
             var samples = await sampleRepository.GetWhereAsync(s => s.Mm >= startMm && s.Mm <= endMm);
             var outOfRangeMeasures = samples.Where(s => Math.Abs(s.Parameter1) > threshold || Math.Abs(s.Parameter2) > threshold || Math.Abs(s.Parameter3) > threshold || Math.Abs(s.Parameter4) > threshold)
@@ -47,8 +47,9 @@ namespace API.Services
                     Parameter2 = Math.Abs(s.Parameter2) > threshold ? s.Parameter2 : null,
                     Parameter3 = Math.Abs(s.Parameter3) > threshold ? s.Parameter3 : null,
                     Parameter4 = Math.Abs(s.Parameter4) > threshold ? s.Parameter4 : null
-                })
-                .ToList();
+                });
+
+            outOfRangeMeasures.ToList().ForEach(m => job.Progress = (int)(outOfRangeMeasures.Count() / (float)samples.Count() * 100));
 
             return outOfRangeMeasures;
         }
