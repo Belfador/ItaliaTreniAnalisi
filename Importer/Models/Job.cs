@@ -1,6 +1,6 @@
-﻿namespace API.Models.Domain
+﻿namespace Importer.Models
 {
-    public class Job
+    internal class Job
     {
         public Guid Id { get; set; }
         public int Progress { get; set; }

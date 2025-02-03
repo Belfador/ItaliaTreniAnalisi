@@ -7,6 +7,6 @@ namespace API.Services
     {
         Task<IEnumerable<Sample>> GetSamples(int page);
         Task ImportSamples(Job job, IEnumerable<Sample> samples);
-        Task<IEnumerable<OutOfRangeMeasureDTO>> AnalyzeSamples(Job job, int startMm, int endMm, int threshold);
+        Task AnalyzeSamples(Job job, int startMm, int endMm, double threshold);
     }
 }

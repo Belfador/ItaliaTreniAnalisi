@@ -76,6 +76,7 @@ namespace API.DAL
             }
 
             job.IsCompleted = true;
+            job.Result = entities.Count();
         }
 
         public async Task<T> DeleteAsync(T entity)

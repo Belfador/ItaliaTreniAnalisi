@@ -45,9 +45,7 @@ namespace ItaliaTreniAnalisi.Controllers
                 var job = jobService.CreateJob();
                 await sampleService.ImportSamples(job, samples);
 
-                var response = TinyMapper.Map<List<Sample>, List<SampleDTO>>(samples.ToList());
-
-                return Accepted(response);
+                return Accepted(job.Id);
             }
             catch (Exception ex)
             {
@@ -56,14 +54,14 @@ namespace ItaliaTreniAnalisi.Controllers
         }
 
         [HttpGet("analyzeSamples")]
-        public async Task<IActionResult> AnalyzeSamples(int startMm, int endMm, int threshold)
+        public async Task<IActionResult> AnalyzeSamples(int startMm, int endMm, double threshold)
         {
             try
             {
                 var job = jobService.CreateJob();
-                var outOfRangeMeasures = await sampleService.AnalyzeSamples(job, startMm, endMm, threshold);
+                await sampleService.AnalyzeSamples(job, startMm, endMm, threshold);
 
-                return Accepted(outOfRangeMeasures);
+                return Accepted(job.Id);
             }
             catch (Exception ex)
             {

@@ -36,7 +36,7 @@ namespace API.Services
             await sampleRepository.BulkCopyAsync(job, samples);
         }
 
-        public async Task<IEnumerable<OutOfRangeMeasureDTO>> AnalyzeSamples(Job job, int startMm, int endMm, int threshold)
+        public async Task AnalyzeSamples(Job job, int startMm, int endMm, double threshold)
         {
             var samples = await sampleRepository.GetWhereAsync(s => s.Mm >= startMm && s.Mm <= endMm);
             var outOfRangeMeasures = samples.Where(s => Math.Abs(s.Parameter1) > threshold || Math.Abs(s.Parameter2) > threshold || Math.Abs(s.Parameter3) > threshold || Math.Abs(s.Parameter4) > threshold)
@@ -51,7 +51,8 @@ namespace API.Services
 
             outOfRangeMeasures.ToList().ForEach(m => job.Progress = (int)(outOfRangeMeasures.Count() / (float)samples.Count() * 100));
 
-            return outOfRangeMeasures;
+            job.IsCompleted = true;
+            job.Result = outOfRangeMeasures;
         }
     }
 }
