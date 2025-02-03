@@ -76,7 +76,7 @@ namespace API.DAL
             }
 
             job.IsCompleted = true;
-            job.Result = entities.Count();
+            job.Result = $"{entities.Count()} records imported";
         }
 
         public async Task<T> DeleteAsync(T entity)

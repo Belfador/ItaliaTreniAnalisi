@@ -1,6 +1,7 @@
 ﻿using API.DAL;
 using API.Models.Domain;
 using API.Models.DTO;
+using System.Text.Json;
 
 namespace API.Services
 {
@@ -49,10 +50,10 @@ namespace API.Services
                     Parameter4 = Math.Abs(s.Parameter4) > threshold ? s.Parameter4 : null
                 });
 
-            outOfRangeMeasures.ToList().ForEach(m => job.Progress = (int)(outOfRangeMeasures.Count() / (float)samples.Count() * 100));
+            var result = outOfRangeMeasures.ToList();
 
             job.IsCompleted = true;
-            job.Result = outOfRangeMeasures;
+            job.Result = JsonSerializer.Serialize(result);
         }
     }
 }

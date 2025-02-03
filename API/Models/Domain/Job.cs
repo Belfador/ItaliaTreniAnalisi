@@ -5,6 +5,6 @@
         public Guid Id { get; set; }
         public int Progress { get; set; }
         public bool IsCompleted { get; set; }
-        public object? Result { get; set; }
+        public string? Result { get; set; }
     }
 }
